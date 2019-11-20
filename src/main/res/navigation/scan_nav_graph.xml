@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scan_nav_graph"
+    app:startDestination="@id/cameraFragment">
+
+    <fragment
+        android:id="@+id/cameraFragment"
+        android:name="com.creoit.docscanner.ui.CameraFragment"
+        android:label="Camera"
+        tools:layout="@layout/fragment_camera" >
+        <action
+            android:id="@+id/action_cameraFragment_to_imageViewerFragment"
+            app:destination="@id/imageViewerFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/imageViewerFragment"
+        android:name="com.creoit.docscanner.ui.ImageViewerFragment"
+        android:label="Documents"
+        tools:layout="@layout/fragment_image_viewer" >
+        <action
+            android:id="@+id/action_imageViewerFragment_to_cropImageFragment"
+            app:destination="@id/cropImageFragment" />
+        <action
+            android:id="@+id/action_imageViewerFragment_to_rearrangeFragment"
+            app:destination="@id/rearrangeFragment" />
+        <action
+            android:id="@+id/action_imageViewerFragment_to_imageFilterFragment"
+            app:destination="@id/imageFilterFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/cropImageFragment"
+        android:name="com.creoit.docscanner.ui.CropImageFragment"
+        android:label="@string/crop"
+        tools:layout="@layout/fragment_crop_image" />
+    <fragment
+        android:id="@+id/rearrangeFragment"
+        android:name="com.creoit.docscanner.ui.RearrangeFragment"
+        android:label="@string/reorder"
+        tools:layout="@layout/fragment_rearrange" />
+    <fragment
+        android:id="@+id/imageFilterFragment"
+        android:name="com.creoit.docscanner.ui.ImageFilterFragment"
+        android:label="@string/filter"
+        tools:layout="@layout/fragment_image_filter" />
+</navigation>

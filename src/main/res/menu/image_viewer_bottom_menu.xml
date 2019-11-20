@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_filter"
+        android:title="@string/filter"
+        android:icon="@drawable/ds_ic_photo_filter_black_24dp"/>
+    <item
+        android:id="@+id/nav_crop"
+        android:title="@string/crop"
+        android:icon="@drawable/ds_ic_crop_black_24dp"/>
+    <item
+        android:id="@+id/nav_rotate"
+        android:title="@string/rotate"
+        android:icon="@drawable/ds_ic_rotate_right_black_24dp"/>
+    <item
+        android:id="@+id/nav_move"
+        android:title="@string/reorder"
+        android:icon="@drawable/ds_ic_compare_arrows_black_24dp"/>
+    <item
+        android:id="@+id/nav_delete"
+        android:title="@string/delete"
+        android:icon="@drawable/ds_ic_delete_black_24dp"/>
+</menu>
