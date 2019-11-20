@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">DocScanner</string>
+    <string name="filter">Filter</string>
+    <string name="crop">Crop</string>
+    <string name="rotate">Rotate</string>
+    <string name="reorder">Reorder</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+
+    <string name="b_w">B&amp;W</string>
+    <string name="original">Original</string>
+    <string name="contrast">Contrast</string>
+    <string name="brightness">Brightness</string>
+    <string name="converting_to_pdf">Converting to PDF</string>
+    <string name="loading_from_gallery">Loading from gallery</string>
+</resources>

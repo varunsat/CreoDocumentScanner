@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_b_w"
+        android:title="@string/b_w"
+        android:icon="@drawable/ds_ic_filter_b_and_w_black_24dp"/>
+    <item
+        android:id="@+id/menu_original"
+        android:title="@string/original"
+        android:icon="@drawable/ds_ic_image_black_24dp"/>
+</menu>
