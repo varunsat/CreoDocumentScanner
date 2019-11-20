@@ -26,6 +26,7 @@ import com.creoit.docscanner.R
 import com.creoit.docscanner.custom.BaseFragment
 import com.creoit.docscanner.utils.*
 import com.creoit.docscanner.ui.ImageViewerFragment.Companion.ARG_DOC_POSITION
+import id.zelory.compressor.Compressor
 import kotlinx.android.synthetic.main.fragment_camera.*
 import kotlinx.android.synthetic.main.rv_item_docs.view.*
 import kotlinx.coroutines.async

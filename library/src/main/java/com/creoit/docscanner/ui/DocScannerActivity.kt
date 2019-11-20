@@ -8,6 +8,8 @@ import android.graphics.Bitmap
 import android.graphics.Point
 import android.net.Uri
 import android.os.Bundle
+import android.os.CancellationSignal
+import android.provider.MediaStore.setRequireOriginal
 import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -30,10 +32,12 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import androidx.navigation.NavOptions
+import id.zelory.compressor.Compressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import org.jetbrains.anko.intentFor
 import org.jetbrains.anko.startActivityForResult
+import java.io.File
 
 
 class DocScannerActivity : BaseActivity(), OnFragmentInteractionListener {
@@ -79,7 +83,12 @@ class DocScannerActivity : BaseActivity(), OnFragmentInteractionListener {
 
 
                             //val bitmap = uri.getRotationFixedImage()
-                            val bitmap = getGlideBitmap(uri)
+                            //val bitmap = getGlideBitmap(uri)
+
+                            val bitmap = Compressor(this@DocScannerActivity).compressToBitmap(
+                                File(getLocalUri(uri).getPath(this@DocScannerActivity))
+                            )
+
                             bitmap?.let {
                                 val points = ArrayList<Point>()
                                 var docImage: Bitmap? = null

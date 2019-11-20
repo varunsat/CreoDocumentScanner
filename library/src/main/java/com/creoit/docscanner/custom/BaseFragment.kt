@@ -34,25 +34,4 @@ abstract class BaseFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
     }
 
-    inline fun <reified T : Activity> startActivity(vararg args: Pair<String, Any?>) {
-        context?.startActivity<T>(*args)
-    }
-
-    suspend inline fun <reified T : Activity> start(
-        vararg params: Pair<String, Any?>,
-        requestCode: Int? = null
-    ) = (activity as? BaseActivity?)?.start<T>(*params, requestCode = requestCode)
-
-
-    suspend inline fun startAction(
-        intent: Intent,
-        vararg params: Pair<String, Any?>
-    ) = (activity as? BaseActivity?)?.startAction(intent, *params)
-
-
-    fun setToolbarTitle(@StringRes titleRes: Int) = (activity as? BaseActivity)?.setToolbarTitle(titleRes)
-    fun setToolbarTitle(title: String) = (activity as? BaseActivity)?.setToolbarTitle(title)
-    fun setToolbarSubTitle(@StringRes subTitleRes: Int) = (activity as? BaseActivity)?.setToolbarSubTitle(subTitleRes)
-    fun setToolbarSubTitle(subTitle: String?) = (activity as? BaseActivity)?.setToolbarSubTitle(subTitle)
-
 }

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">CreoDocScanner</string>
+    <string name="pick_from_camera">Pick From Camera</string>
+    <string name="pick_from_gallery">Pick From Gallery</string>
 </resources>

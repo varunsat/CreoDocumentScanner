@@ -18,7 +18,7 @@ group = "com.github.varunsat"
 android {
     compileSdkVersion(29)
     defaultConfig {
-        minSdkVersion(23)
+        minSdkVersion(22)
         targetSdkVersion(29)
         versionCode = 1
         versionName = "1.0.0-beta01"
@@ -70,6 +70,9 @@ dependencies {
     val glideVersion = "4.9.0"
     implementation("com.github.bumptech.glide:glide:$glideVersion")
     kapt("com.github.bumptech.glide:compiler:$glideVersion")
+
+    //Image Compressor
+    implementation("id.zelory:compressor:2.1.0")
 
     // Splitties
     val splittiesVersion = "3.0.0-alpha04"

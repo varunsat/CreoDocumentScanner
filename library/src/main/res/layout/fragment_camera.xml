@@ -46,7 +46,7 @@
         app:layout_constraintBottom_toTopOf="@id/rvDocs"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="20dp"
         android:tint="#fff"
         android:elevation="10dp"
         android:src="@drawable/ds_ic_camera_black_24dp"/>
