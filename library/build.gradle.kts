@@ -10,7 +10,10 @@ plugins {
     id("kotlin-android")
     id("kotlin-android-extensions")
     id("kotlin-kapt")
+    id("com.github.dcendents.android-maven")
 }
+
+group = "com.github.varunsat"
 
 android {
     compileSdkVersion(29)
