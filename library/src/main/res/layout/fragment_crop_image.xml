@@ -34,6 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:elevation="2dp"
+        app:strokeColor="?colorPrimary"
         app:layout_constraintTop_toTopOf="@id/ivPreview"
         app:layout_constraintBottom_toBottomOf="@id/ivPreview"
         app:layout_constraintStart_toStartOf="@id/ivPreview"

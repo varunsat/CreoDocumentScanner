@@ -2,23 +2,19 @@ package com.creoit.docscanner.custom
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.Point
+import android.graphics.*
+import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.util.Log
-import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import android.widget.ImageView
-import androidx.appcompat.widget.TintTypedArray.obtainStyledAttributes
 import androidx.core.content.ContextCompat
 import com.creoit.docscanner.R
-import com.creoit.docscanner.utils.RectAligner
 import com.creoit.docscanner.utils.Rectangle
 import com.creoit.docscanner.utils.distBwPoints
+import com.creoit.docscanner.utils.withTypedArray
 import kotlin.math.atan2
 
 
@@ -41,17 +37,25 @@ class ImageCropLayout(context: Context, attributeSet: AttributeSet) :
     private var onPointChangeListener: OnPointChangeListener? = null
 
     init {
-        initViews()
+        initViews(attributeSet)
     }
 
     @SuppressLint("ResourceType")
-    private fun initViews() {
+    private fun initViews(attrs: AttributeSet) {
 
         transparentPaint.style = Paint.Style.FILL
         transparentPaint.color = ContextCompat.getColor(context, R.color.transparentGray)
         paint.style = Paint.Style.FILL
-        paint.color = fetchPrimaryColor()
         paint.strokeWidth = 9f
+
+        attrs.let {
+            context.withTypedArray(it, R.styleable.ImageCropLayout) {
+                paint.color = getColor(
+                    R.styleable.ImageCropLayout_strokeColor,
+                    Color.WHITE
+                )
+            }
+        }
         addView(imageView)
 
         setWillNotDraw(false)
@@ -456,14 +460,6 @@ class ImageCropLayout(context: Context, attributeSet: AttributeSet) :
     }
 
     private fun atan2(x: Int, y: Int) = atan2(y.toDouble(), x.toDouble())
-
-    private fun fetchPrimaryColor(): Int {
-        val typedValue = TypedValue()
-        val a = obtainStyledAttributes(context, typedValue.data, intArrayOf(R.attr.colorPrimary))
-        val color = a.getColor(0, 0)
-        a.recycle()
-        return color
-    }
 
     companion object {
         interface OnPointChangeListener {

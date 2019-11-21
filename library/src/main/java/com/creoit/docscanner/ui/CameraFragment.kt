@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.*
+import android.graphics.drawable.ColorDrawable
 import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Handler
@@ -380,15 +381,15 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     }
 
     private fun fetchPrimaryColor(): Int {
-        val typedValue = TypedValue()
+        /*val typedValue = TypedValue()
         val a = TintTypedArray.obtainStyledAttributes(
             context,
             typedValue.data,
             intArrayOf(R.attr.colorPrimary)
         )
         val color = a.getColor(0, 0)
-        a.recycle()
-        return color
+        a.recycle()*/
+        return (viewColor.background as? ColorDrawable)?.color ?: Color.WHITE
     }
 
 

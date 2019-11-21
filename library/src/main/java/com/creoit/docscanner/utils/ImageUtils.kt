@@ -1,6 +1,7 @@
 package com.creoit.docscanner.utils
 
 import android.content.Context
+import android.content.res.TypedArray
 import android.graphics.*
 import android.media.Image
 import android.net.Uri
@@ -19,7 +20,9 @@ import kotlin.math.max
 import kotlin.math.pow
 import android.graphics.Bitmap
 import android.os.Environment.getExternalStorageDirectory
+import android.util.AttributeSet
 import android.util.TypedValue
+import androidx.annotation.StyleableRes
 import androidx.appcompat.widget.TintTypedArray
 import androidx.core.net.toUri
 import com.creoit.docscanner.R
@@ -413,5 +416,17 @@ fun Bitmap.getDefaultGraphicRect(points: ArrayList<android.graphics.Point>?) {
         points.add(android.graphics.Point(minX, height - minY))
         points.add(android.graphics.Point(width - minX, height - minY))
         points.add(android.graphics.Point(width - minX, minY))
+    }
+}
+
+fun Context.withTypedArray(
+    attrs: AttributeSet, @StyleableRes styleableResArray: IntArray,
+    block: TypedArray.() -> Unit
+) {
+    val typedArray = obtainStyledAttributes(attrs, styleableResArray)
+    try {
+        typedArray.block()
+    } finally {
+        typedArray.recycle()
     }
 }

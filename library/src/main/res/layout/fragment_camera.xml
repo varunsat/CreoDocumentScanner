@@ -58,4 +58,12 @@
         android:id="@+id/rvDocs"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
+    <View
+        android:id="@+id/viewColor"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="?colorPrimary"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
