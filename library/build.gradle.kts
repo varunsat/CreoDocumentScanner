@@ -20,15 +20,15 @@ android {
     defaultConfig {
         minSdkVersion(22)
         targetSdkVersion(29)
-        versionCode = 1
-        versionName = "1.0.0-beta01"
+        versionCode = 2
+        versionName = "0.0.1-beta04"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -50,7 +50,8 @@ dependencies {
     val cameraXVersion = "1.0.0-alpha04"
     implementation("androidx.camera:camera-core:$cameraXVersion")
     implementation("androidx.camera:camera-camera2:$cameraXVersion")
-    implementation("com.quickbirdstudios:opencv:3.4.1")
+    //OpenCV
+    /*implementation("com.quickbirdstudios:opencv:3.4.1")*/
     // Lifecycle - ViewModel and LiveData
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.2.0-rc02")
     implementation("androidx.lifecycle:lifecycle-extensions:2.1.0")
@@ -80,4 +81,6 @@ dependencies {
     implementation("com.louiscad.splitties:splitties-alertdialog-appcompat:$splittiesVersion")
     implementation("com.louiscad.splitties:splitties-views-dsl-material:$splittiesVersion")
     implementation("com.louiscad.splitties:splitties-views-material:$splittiesVersion")
+
+    implementation(project(":sdk"))
 }

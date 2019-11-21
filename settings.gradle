@@ -1,2 +1,2 @@
-include ':sample', ':library'
+include ':sample', ':library', ':sdk'
 rootProject.name='CreoDocScanner'
