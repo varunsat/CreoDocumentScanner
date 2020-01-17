@@ -20,8 +20,8 @@ android {
     defaultConfig {
         minSdkVersion(22)
         targetSdkVersion(29)
-        versionCode = 2
-        versionName = "0.0.1-beta04"
+        versionCode = 3
+        versionName = "0.0.1-beta08"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -45,7 +45,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta3")
     implementation("com.google.android.material:material:1.1.0-alpha08")
-    implementation("androidx.viewpager2:viewpager2:1.0.0-beta04")
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
 
     val cameraXVersion = "1.0.0-alpha04"
     implementation("androidx.camera:camera-core:$cameraXVersion")

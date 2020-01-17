@@ -29,6 +29,7 @@ import com.creoit.docscanner.utils.*
 import com.creoit.docscanner.ui.ImageViewerFragment.Companion.ARG_DOC_POSITION
 import id.zelory.compressor.Compressor
 import kotlinx.android.synthetic.main.fragment_camera.*
+import kotlinx.android.synthetic.main.fragment_camera.view.*
 import kotlinx.android.synthetic.main.rv_item_docs.view.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     private var lensFacing = CameraX.LensFacing.BACK
     private var points = ArrayList<Point>()
     private var bitmap: Bitmap? = null
-    private lateinit var outputDirectory: File
+    private var outputDirectory: File? = null
 
     private var autoFitPreviewBuilder: AutoFitPreviewBuilder? = null
     private var preview: Preview? = null
@@ -58,6 +59,8 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     private lateinit var screenAspectRatio: Rational
 
     private lateinit var displayManager: DisplayManager
+
+    private var isPaused = false
 
     private val IMMERSIVE_FLAG_TIMEOUT = 500L
     private val FLAGS_FULLSCREEN =
@@ -93,7 +96,9 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initViews()
+        lifecycleScope.launchWhenStarted {
+            initViews()
+        }
     }
 
     private fun initViews() {
@@ -110,10 +115,14 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
             adapter = rvAdapter
         }
 
-        outputDirectory = getOutputDirectory(context!!)
-        textureView.post {
+        context?.let {
+            outputDirectory = getOutputDirectory(it)
+        }
+        textureView?.post {
             //if (preview == null)
-            startCamera()
+            if (!isPaused) {
+                startCamera()
+            }
         }
 
         btnSave.setOnClickListener {
@@ -128,7 +137,8 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
 
     override fun onResume() {
         super.onResume()
-        if(::rvAdapter.isInitialized) {
+        isPaused = false
+        if (::rvAdapter.isInitialized) {
             rvAdapter.notifyDataSetChanged()
             with(textureView) {
                 postDelayed({
@@ -148,8 +158,13 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
         displayManager.unregisterDisplayListener(displayListener)
     }
 
+    override fun onPause() {
+        super.onPause()
+        isPaused = true
+    }
+
     private fun startCamera() {
-        metrics = DisplayMetrics().also { textureView.display.getRealMetrics(it) }
+        metrics = DisplayMetrics().also { textureView?.display?.getRealMetrics(it) }
         screenSize = Size(metrics.widthPixels, metrics.heightPixels)
         screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
 
@@ -208,7 +223,7 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
                                         val doc = getDocument(previewBitmap, rectangle)
                                         val document = Document(it, rectangle, doc)
                                         rvAdapter.addItem(document, notify = true)
-                                        if(documentVM.isSinglePage) {
+                                        if (documentVM.isSinglePage) {
 
                                             val navOptions = NavOptions.Builder()
                                                 .setPopUpTo(R.id.cameraFragment, true)
@@ -319,7 +334,14 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                textureView.post { startCamera() }
+                if (textureView != null) {
+                    textureView.post {
+
+                        if (!isPaused) {
+                            startCamera()
+                        }
+                    }
+                }
             } else {
                 Toast.makeText(
                     context,
