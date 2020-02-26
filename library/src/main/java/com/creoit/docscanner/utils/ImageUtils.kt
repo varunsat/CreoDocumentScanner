@@ -385,7 +385,7 @@ fun getUri(bitmap: Bitmap, count: Int): Uri {
     )
     fOut.flush()
     fOut.close()
-    return file.toUri()
+    return Uri.fromFile(file)
 }
 
 fun getOutputDirectory(context: Context): File {

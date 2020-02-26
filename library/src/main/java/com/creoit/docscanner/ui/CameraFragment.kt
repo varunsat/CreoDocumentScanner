@@ -1,4 +1,5 @@
 package com.creoit.docscanner.ui
+/*
 
 import android.Manifest
 import android.content.Context
@@ -39,17 +40,20 @@ import splitties.init.appCtx
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
 import kotlin.collections.ArrayList
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class CameraFragment : BaseFragment(), OnFrameChangeListener {
     private var listener: OnFragmentInteractionListener? = null
 
-    private var lensFacing = CameraX.LensFacing.BACK
     private var points = ArrayList<Point>()
     private var bitmap: Bitmap? = null
     private var outputDirectory: File? = null
+    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
 
-    private var autoFitPreviewBuilder: AutoFitPreviewBuilder? = null
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
@@ -74,8 +78,7 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) = Unit
         override fun onDisplayRemoved(displayId: Int) = Unit
-        override fun onDisplayChanged(displayId: Int) = textureView?.let { view ->
-            preview?.setTargetRotation(view.display.rotation)
+        override fun onDisplayChanged(displayId: Int) = previewView?.let { view ->
             imageCapture?.setTargetRotation(view.display.rotation)
             imageAnalyzer?.setTargetRotation(view.display.rotation)
 
@@ -118,7 +121,7 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
         context?.let {
             outputDirectory = getOutputDirectory(it)
         }
-        textureView?.post {
+        previewView?.post {
             //if (preview == null)
             if (!isPaused) {
                 startCamera()
@@ -140,7 +143,7 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
         isPaused = false
         if (::rvAdapter.isInitialized) {
             rvAdapter.notifyDataSetChanged()
-            with(textureView) {
+            with(previewView) {
                 postDelayed({
                     systemUiVisibility = FLAGS_FULLSCREEN
                 }, IMMERSIVE_FLAG_TIMEOUT)
@@ -164,24 +167,24 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     }
 
     private fun startCamera() {
-        metrics = DisplayMetrics().also { textureView?.display?.getRealMetrics(it) }
+        metrics = DisplayMetrics().also { previewView.display?.getRealMetrics(it) }
         screenSize = Size(metrics.widthPixels, metrics.heightPixels)
         screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
 
-        val previewConfig = PreviewConfig.Builder().apply {
-            setLensFacing(lensFacing)
-            setTargetAspectRatio(screenAspectRatio)
+        val previewConfig = Preview.Builder().apply {
+            //setLensFacing(CameraSelector.LENS_FACING_BACK)
+            setTargetAspectRatio(aspectRatio(metrics.widthPixels, metrics.heightPixels))
             setTargetResolution(screenSize)
+            setTargetRotation(previewView.display?.rotation ?: 0)
             activity?.windowManager?.defaultDisplay?.rotation?.let { setTargetRotation(it) }
         }.build()
 
-        autoFitPreviewBuilder = AutoFitPreviewBuilder.build(previewConfig, textureView)
-        preview = autoFitPreviewBuilder?.useCase
+        previewConfig.previewSurfaceProvider = previewView.previewSurfaceProvider
 
-        val imageCaptureConfig = ImageCaptureConfig.Builder()
-            .setTargetAspectRatio(screenAspectRatio)
+        val imageCaptureConfig = ImageCapture.Builder()
+            .setTargetAspectRatio(aspectRatio(metrics.widthPixels, metrics.heightPixels))
             .setTargetResolution(screenSize)
-            .setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
 
         activity?.windowManager?.defaultDisplay?.rotation?.let {
             imageCaptureConfig.setTargetRotation(
@@ -193,54 +196,76 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
 
         ivCapture.setOnClickListener {
             lifecycleScope.launch {
-                imageCapture?.takePicture(object : ImageCapture.OnImageCapturedListener() {
-                    override fun onCaptureSuccess(image: ImageProxy?, rotationDegrees: Int) {
+                val mainExecutor = ContextCompat.getMainExecutor(requireContext())
 
-                        lifecycleScope.launch {
-                            var rotation = rotationDegrees % 360
-                            if (rotation < 0) {
-                                rotation += 360
-                            }
-                            val previewBitmap = image?.decodeBitmap()?.rotate(rotation.toFloat())
-                            super.onCaptureSuccess(image, rotationDegrees)
-                            previewBitmap?.let {
-                                val widthVal = it.width.toDouble() / bitmap!!.width.toDouble()
-                                val heightVal =
-                                    it.height.toDouble() / bitmap!!.height.toDouble()
-                                points.forEach {
-                                    it.x = (it.x.toDouble() * widthVal).toInt()
-                                    it.y = (it.y.toDouble() * heightVal).toInt()
-                                }
-                                createImageFromBitmap(
-                                    context!!,
-                                    previewBitmap,
-                                    rvAdapter.itemCount
-                                )?.let {
-                                    if (points.size == 4) {
-                                        val rectangle = Rectangle(
-                                            points[0], points[1], points[2], points[3]
-                                        )
-                                        val doc = getDocument(previewBitmap, rectangle)
-                                        val document = Document(it, rectangle, doc)
-                                        rvAdapter.addItem(document, notify = true)
-                                        if (documentVM.isSinglePage) {
+                val photoFile =
+                    createFile(getOutputDirectory(requireContext()), FILENAME, PHOTO_EXTENSION)
 
-                                            val navOptions = NavOptions.Builder()
-                                                .setPopUpTo(R.id.cameraFragment, true)
-                                                .build()
-                                            findNavController().navigate(
-                                                R.id.action_cameraFragment_to_imageViewerFragment,
-                                                bundleOf(),
-                                                navOptions
-                                            )
-                                        }
+                // Setup image capture metadata
+                val metadata = ImageCapture.Metadata()
+                imageCapture?.takePicture(
+                    photoFile,
+                    metadata,
+                    mainExecutor,
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(file: File) {
+
+                            lifecycleScope.launch {
+
+                                */
+/*var rotation = rotationDegrees % 360
+                                if (rotation < 0) {
+                                    rotation += 360
+                                }*//*
+
+                                val previewBitmap = BitmapFactory.decodeFile(file.absolutePath)
+                                    //image?.decodeBitmap()?.rotate(rotation.toFloat())
+                                previewBitmap?.let {
+                                    val widthVal = it.width.toDouble() / bitmap!!.width.toDouble()
+                                    val heightVal =
+                                        it.height.toDouble() / bitmap!!.height.toDouble()
+                                    points.forEach {
+                                        it.x = (it.x.toDouble() * widthVal).toInt()
+                                        it.y = (it.y.toDouble() * heightVal).toInt()
                                     }
+                                    createImageFromBitmap(
+                                        context!!,
+                                        previewBitmap,
+                                        rvAdapter.itemCount
+                                    )?.let {
+                                        if (points.size == 4) {
+                                            val rectangle = Rectangle(
+                                                points[0], points[1], points[2], points[3]
+                                            )
+                                            val doc = getDocument(previewBitmap, rectangle)
+                                            val document = Document(it, rectangle, doc)
+                                            rvAdapter.addItem(document, notify = true)
+                                            if (documentVM.isSinglePage) {
 
+                                                val navOptions = NavOptions.Builder()
+                                                    .setPopUpTo(R.id.cameraFragment, true)
+                                                    .build()
+                                                findNavController().navigate(
+                                                    R.id.action_cameraFragment_to_imageViewerFragment,
+                                                    bundleOf(),
+                                                    navOptions
+                                                )
+                                            }
+                                        }
+
+                                    }
                                 }
                             }
                         }
-                    }
-                })
+
+                        override fun onError(
+                            imageCaptureError: Int,
+                            message: String,
+                            cause: Throwable?
+                        ) {
+                            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                        }
+                    })
             }
         }
 
@@ -250,30 +275,40 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     }
 
     private fun getAnalyzer(): ImageAnalysis {
-        val analyzerConfig = ImageAnalysisConfig.Builder().apply {
+        val analyzerConfig = ImageAnalysis.Builder().apply {
             val analyzerThread = HandlerThread("LuminosityAnalysis").apply { start() }
-            setCallbackHandler(Handler(analyzerThread.looper))
-            setImageReaderMode(
-                ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE
-            )
             setTargetAspectRatio(screenAspectRatio)
             setTargetResolution(screenSize)
-            setTargetRotation(textureView.display.rotation)
+            setTargetRotation(previewView.display.rotation)
 
             activity?.windowManager?.defaultDisplay?.rotation?.let { setTargetRotation(it) }
         }.build()
 
-        return ImageAnalysis(analyzerConfig).apply {
+        analyzerConfig.setAnalyzer(Executors.newSingleThreadExecutor(), ImageAnalyzer(this@CameraFragment))
+
+        return analyzerConfig
+
+        */
+/*return ImageAnalysis(analyzerConfig).apply {
             analyzer = ImageAnalyzer(this@CameraFragment)
             imageAnalyzer = this
+        }*//*
+
+    }
+
+    private fun aspectRatio(width: Int, height: Int): Int {
+        val previewRatio = max(width, height).toDouble() / min(width, height)
+        if (abs(previewRatio - RATIO_4_3_VALUE) <= abs(previewRatio - RATIO_16_9_VALUE)) {
+            return AspectRatio.RATIO_4_3
         }
+        return AspectRatio.RATIO_16_9
     }
 
     override fun onChange(bitmap: Bitmap, points: ArrayList<Point>) {
         this.bitmap = bitmap
-        val size = autoFitPreviewBuilder?.viewFinderDimens ?: screenSize
+        //val size = autoFitPreviewBuilder?.viewFinderDimens ?: screenSize
         lifecycleScope.launchWhenResumed {
-            val layoutParams = textureView.layoutParams as ConstraintLayout.LayoutParams
+            val layoutParams = previewView.layoutParams as ConstraintLayout.LayoutParams
             val ratio = "${bitmap.width}:${bitmap.height}"
             if (layoutParams.dimensionRatio != ratio) {
                 val set = ConstraintSet()
@@ -308,10 +343,12 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
                     (previewBitmap.height.toDouble() / (bitmap.height.toDouble() / it.y.toDouble())).toInt()
                 )
             }
-            /*val previewPoints = points.map{
+            */
+/*val previewPoints = points.map{
                 Point( (it.x.toDouble() * widthVal).toInt(),
                     (it.y.toDouble() * heightVal).toInt())
-            }*/
+            }*//*
+
 
             Log.d(
                 "Sizes Of Image",
@@ -334,8 +371,8 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                if (textureView != null) {
-                    textureView.post {
+                if (previewView != null) {
+                    previewView.post {
 
                         if (!isPaused) {
                             startCamera()
@@ -381,11 +418,6 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
         }
     }
 
-    companion object {
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    }
-
     override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is OnFragmentInteractionListener) {
@@ -403,14 +435,16 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
     }
 
     private fun fetchPrimaryColor(): Int {
-        /*val typedValue = TypedValue()
+        */
+/*val typedValue = TypedValue()
         val a = TintTypedArray.obtainStyledAttributes(
             context,
             typedValue.data,
             intArrayOf(R.attr.colorPrimary)
         )
         val color = a.getColor(0, 0)
-        a.recycle()*/
+        a.recycle()*//*
+
         return (viewColor.background as? ColorDrawable)?.color ?: Color.WHITE
     }
 
@@ -426,4 +460,21 @@ class CameraFragment : BaseFragment(), OnFrameChangeListener {
         super.onDetach()
         listener = null
     }
+
+    companion object {
+        private const val REQUEST_CODE_PERMISSIONS = 10
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        private const val FILENAME = "yyyy-MM-dd-HH-mm-ss-SSS"
+        private const val PHOTO_EXTENSION = ".jpg"
+        private const val RATIO_4_3_VALUE = 4.0 / 3.0
+        private const val RATIO_16_9_VALUE = 16.0 / 9.0
+
+        private fun createFile(baseFolder: File, format: String, extension: String) =
+            File(
+                baseFolder, SimpleDateFormat(format, Locale.US)
+                    .format(System.currentTimeMillis()) + extension
+            )
+
+    }
 }
+*/

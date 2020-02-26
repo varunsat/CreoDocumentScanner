@@ -18,8 +18,8 @@
         android:layout_margin="10dp"
         android:text="@string/save"/>
 
-    <TextureView
-        android:id="@+id/textureView"
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:visibility="visible"
@@ -34,10 +34,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@id/textureView"
-        app:layout_constraintEnd_toEndOf="@id/textureView"
-        app:layout_constraintStart_toStartOf="@id/textureView"
-        app:layout_constraintTop_toTopOf="@id/textureView" />
+        app:layout_constraintBottom_toBottomOf="@id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@id/viewFinder"
+        app:layout_constraintStart_toStartOf="@id/viewFinder"
+        app:layout_constraintTop_toTopOf="@id/viewFinder" />
 
     <ImageView
         android:id="@+id/ivCapture"

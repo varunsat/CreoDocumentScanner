@@ -20,35 +20,52 @@ import java.util.Objects
  * Builder for [Preview] that takes in a [WeakReference] of the view finder and [PreviewConfig],
  * then instantiates a [Preview] which automatically resizes and rotates reacting to config changes.
  */
+/*
 class AutoFitPreviewBuilder private constructor(
     config: PreviewConfig, viewFinderRef: WeakReference<TextureView>) {
 
-    /** Public instance of preview use-case which can be used by consumers of this adapter */
+    */
+/** Public instance of preview use-case which can be used by consumers of this adapter *//*
+
     val useCase: Preview
 
-    /** Internal variable used to keep track of the use case's output rotation */
+    */
+/** Internal variable used to keep track of the use case's output rotation *//*
+
     private var bufferRotation: Int = 0
 
-    /** Internal variable used to keep track of the view's rotation */
+    */
+/** Internal variable used to keep track of the view's rotation *//*
+
     private var viewFinderRotation: Int? = null
 
-    /** Internal variable used to keep track of the use-case's output dimension */
+    */
+/** Internal variable used to keep track of the use-case's output dimension *//*
+
     private var bufferDimens: Size = Size(0, 0)
 
-    /** Internal variable used to keep track of the view's dimension */
+    */
+/** Internal variable used to keep track of the view's dimension *//*
+
     var viewFinderDimens: Size = Size(0, 0)
 
-    /** Internal variable used to keep track of the view's display */
+    */
+/** Internal variable used to keep track of the view's display *//*
+
     private var viewFinderDisplay: Int = -1
 
-    /** Internal reference of the [DisplayManager] */
+    */
+/** Internal reference of the [DisplayManager] *//*
+
     private lateinit var displayManager: DisplayManager
 
-    /**
+    */
+/**
      * We need a display listener for orientation changes that do not trigger a configuration
      * change, for example if we choose to override config change in manifest or for 180-degree
      * orientation changes.
-     */
+     *//*
+
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) = Unit
         override fun onDisplayRemoved(displayId: Int) = Unit
@@ -130,7 +147,9 @@ class AutoFitPreviewBuilder private constructor(
         })
     }
 
-    /** Helper function that fits a camera preview into the given [TextureView] */
+    */
+/** Helper function that fits a camera preview into the given [TextureView] *//*
+
     private fun updateTransform(textureView: TextureView?, rotation: Int?, newBufferDimens: Size,
                                 newViewFinderDimens: Size) {
         // This should not happen anyway, but now the linter knows
@@ -209,7 +228,9 @@ class AutoFitPreviewBuilder private constructor(
     companion object {
         private val TAG = AutoFitPreviewBuilder::class.java.simpleName
 
-        /** Helper function that gets the rotation of a [Display] in degrees */
+        */
+/** Helper function that gets the rotation of a [Display] in degrees *//*
+
         fun getDisplaySurfaceRotation(display: Display?) = when(display?.rotation) {
             Surface.ROTATION_0 -> 0
             Surface.ROTATION_90 -> 90
@@ -218,12 +239,14 @@ class AutoFitPreviewBuilder private constructor(
             else -> null
         }
 
-        /**
+        */
+/**
          * Main entrypoint for users of this class: instantiates the adapter and returns an instance
          * of [Preview] which automatically adjusts in size and rotation to compensate for
          * config changes.
-         */
+         *//*
+
         fun build(config: PreviewConfig, viewFinder: TextureView) =
             AutoFitPreviewBuilder(config, WeakReference(viewFinder))
     }
-}
+}*/

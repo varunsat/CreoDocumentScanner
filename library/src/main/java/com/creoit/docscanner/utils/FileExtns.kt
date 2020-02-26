@@ -23,5 +23,5 @@ fun Context.getLocalUri(uri: Uri): Uri {
         inputChannel?.close()
         outputChannel?.close()
     }
-    return newFile.toUri()
+    return Uri.fromFile(newFile)
 }
