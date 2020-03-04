@@ -14,7 +14,7 @@ class ImageAnalyzer(val onFrameChangeListener: OnFrameChangeListener) :
 
     override fun analyze(image: ImageProxy) {
 
-        val bmp = image.getBitmap(0)
+        val bmp = image.getBitmap(image.imageInfo.rotationDegrees)
         bmp.let { bitmap ->
             points.clear()
             getCoordinates(bitmap)?.let {
@@ -39,5 +39,6 @@ class ImageAnalyzer(val onFrameChangeListener: OnFrameChangeListener) :
             }
 
         }
+        image.close()
     }
 }

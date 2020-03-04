@@ -10,6 +10,7 @@ import android.graphics.*
 import android.graphics.drawable.ColorDrawable
 import android.hardware.Camera
 import android.hardware.display.DisplayManager
+import android.media.ExifInterface
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -30,21 +31,27 @@ import androidx.camera.view.PreviewView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.view.setPadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.Navigation
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.creoit.docscanner.R
 import com.creoit.docscanner.custom.BaseFragment
-import com.creoit.docscanner.utils.ImageAnalyzer
-import com.creoit.docscanner.utils.OnFrameChangeListener
-import com.creoit.docscanner.utils.getOutputDirectory
+import com.creoit.docscanner.utils.*
 import kotlinx.android.synthetic.main.fragment_camera.*
+import kotlinx.android.synthetic.main.rv_item_docs.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.opencv.android.OpenCVLoader
 import java.io.File
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
@@ -58,7 +65,7 @@ import kotlin.math.min
 
 
 class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
-    override fun getLayoutResId() = com.creoit.docscanner.R.layout.fragment_camera
+    override fun getLayoutResId() = R.layout.fragment_camera
 
     private lateinit var container: ConstraintLayout
     private lateinit var outputDirectory: File
@@ -74,6 +81,21 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: androidx.camera.core.Camera? = null
+
+    private lateinit var rvAdapter: SimpleAdapter<Document, DocVH>
+
+    private var isPaused = false
+
+    private val IMMERSIVE_FLAG_TIMEOUT = 500L
+    private val FLAGS_FULLSCREEN =
+        View.SYSTEM_UI_FLAG_LOW_PROFILE or
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
+    private val documentVM by sharedViewModel<DocumentVM>()
 
     /**
      * We need a display listener for orientation changes that do not trigger a configuration
@@ -92,6 +114,13 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
         } ?: Unit
     }
 
+    init {
+        if (!OpenCVLoader.initDebug())
+            Log.d("ERROR", "Unable to load OpenCV")
+        else
+            Log.d("SUCCESS", "OpenCV loaded")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mainExecutor = ContextCompat.getMainExecutor(requireContext())
@@ -100,6 +129,20 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
 
     override fun onResume() {
         super.onResume()
+        isPaused = false
+        if (::rvAdapter.isInitialized) {
+            rvAdapter.notifyDataSetChanged()
+            with(viewFinder) {
+                postDelayed({
+                    systemUiVisibility = FLAGS_FULLSCREEN
+                }, IMMERSIVE_FLAG_TIMEOUT)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isPaused = true
     }
 
     override fun onDestroyView() {
@@ -115,33 +158,67 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
 
         override fun onImageSaved(photoFile: File) {
             Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
+            lifecycleScope.launch {
 
-            // We can only change the foreground Drawable using API level 23+ API
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Update the gallery thumbnail with latest picture taken
+                val previewBitmap = BitmapFactory.decodeFile(photoFile.absolutePath).rotate(90f)
+                //image?.decodeBitmap()?.rotate(rotation.toFloat())
+                previewBitmap.let {
+                    val widthVal = it.width.toDouble() / bitmap!!.width.toDouble()
+                    val heightVal =
+                        it.height.toDouble() / bitmap!!.height.toDouble()
+                    points.forEach {
+                        it.x = (it.x.toDouble() * widthVal).toInt()
+                        it.y = (it.y.toDouble() * heightVal).toInt()
+                    }
+                    createImageFromBitmap(
+                        context!!,
+                        previewBitmap,
+                        rvAdapter.itemCount
+                    )?.let {
+                        if (points.size == 4) {
+                            val rectangle = Rectangle(
+                                points[0], points[1], points[2], points[3]
+                            )
+                            val doc = getDocument(previewBitmap, rectangle)
+                            val document = Document(it, rectangle, doc)
+                            rvAdapter.addItem(document, notify = true)
+                            if (documentVM.isSinglePage) {
+
+                                val navOptions = NavOptions.Builder()
+                                    .setPopUpTo(R.id.cameraFragment, true)
+                                    .build()
+                                findNavController().navigate(
+                                    R.id.action_cameraFragment_to_imageViewerFragment,
+                                    bundleOf(),
+                                    navOptions
+                                )
+                            }
+                        }
+
+                    }
+                }
             }
-
-            // Implicit broadcasts will be ignored for devices running API level >= 24
-            // so if you only target API level 24+ you can remove this statement
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                requireActivity().sendBroadcast(
-                    Intent(Camera.ACTION_NEW_PICTURE, Uri.fromFile(photoFile))
-                )
-            }
-
-            // If the folder selected is an external media directory, this is unnecessary
-            // but otherwise other apps will not be able to access our images unless we
-            // scan them using [MediaScannerConnection]
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(photoFile.extension)
-            MediaScannerConnection.scanFile(
-                context, arrayOf(photoFile.absolutePath), arrayOf(mimeType), null
-            )
         }
     }
 
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        lifecycleScope.launchWhenResumed { initViews() }
+    }
+
+    private fun initViews() {
+        rvAdapter = SimpleAdapter(
+            items = documentVM.documentList,
+            getLayoutId = { R.layout.rv_item_docs },
+            vhBinder = { view, _ -> DocVH(view) },
+            binder = { vh, doc -> vh.bind(doc) }
+        )
+
+        with(rvDocs) {
+            layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
+            adapter = rvAdapter
+        }
         container = view as ConstraintLayout
 
         // Every time the orientation of device changes, recompute layout
@@ -167,70 +244,72 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
     }
 
     override fun onChange(bitmap: Bitmap, points: ArrayList<Point>) {
-        this.bitmap = bitmap
-        //val size = autoFitPreviewBuilder?.viewFinderDimens ?: screenSize
         lifecycleScope.launchWhenResumed {
-            val layoutParams = viewFinder.layoutParams as ConstraintLayout.LayoutParams
-            val ratio = "${bitmap.width}:${bitmap.height}"
-            if (layoutParams.dimensionRatio != ratio) {
-                val set = ConstraintSet()
-                set.clone(clCameraFragment)
-                set.setDimensionRatio(R.id.textureView, ratio)
-                set.applyTo(clCameraFragment)
+            viewFinder.post {
+                this@Camera10Fragment.bitmap = bitmap
+                //val size = autoFitPreviewBuilder?.viewFinderDimens ?: screenSize
+                val layoutParams = viewFinder.layoutParams as ConstraintLayout.LayoutParams
+                val ratio = "${bitmap.width}:${bitmap.height}"
+                if (layoutParams.dimensionRatio != ratio) {
 
-                val imageCaptureConfig = ImageCapture.Builder()
-                    .setTargetAspectRatio(aspectRatio(bitmap.width, bitmap.height))
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-
-
-                activity?.windowManager?.defaultDisplay?.rotation?.let {
-                    imageCaptureConfig.setTargetRotation(
-                        it
+                    Log.d(
+                        "Sizes Of Image Ratio",
+                        "\n$ratio\n\n"
                     )
+                    /*val set = ConstraintSet()
+                    set.clone(clCameraFragment)
+                    set.setDimensionRatio(R.id.viewFinder, ratio)
+                    set.applyTo(clCameraFragment)*/
+
+                    /*val imageCaptureConfig = ImageCapture.Builder()
+                        .setTargetAspectRatio(aspectRatio(bitmap.width, bitmap.height))
+                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+
+
+                    activity?.windowManager?.defaultDisplay?.rotation?.let {
+                        imageCaptureConfig.setTargetRotation(
+                            it
+                        )
+                    }*/
+
                 }
 
-                imageCapture = imageCaptureConfig.build()
-                val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-                cameraProviderFuture.addListener(Runnable {
-
-                    // CameraProvider
-                    val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-                    cameraProvider.bindToLifecycle(this@Camera10Fragment, cameraSelector, imageCapture)
-                }, mainExecutor)
-
-            }
-
-            val previewBitmap =
-                Bitmap.createBitmap(viewFinder.width, viewFinder.height, Bitmap.Config.ARGB_8888)
-            val widthVal = previewBitmap.width.toDouble() / bitmap.width.toDouble()
-            val heightVal = previewBitmap.height.toDouble() / bitmap.height.toDouble()
-            this@Camera10Fragment.points.clear()
-            this@Camera10Fragment.points.addAll(points)
-            val previewPoints = points.map {
-                Point(
-                    (previewBitmap.width.toDouble() / (bitmap.width.toDouble() / it.x.toDouble())).toInt(),
-                    (previewBitmap.height.toDouble() / (bitmap.height.toDouble() / it.y.toDouble())).toInt()
-                )
-            }
-            /*val previewPoints = points.map{
+                val previewBitmap =
+                    Bitmap.createBitmap(
+                        viewFinder.width,
+                        viewFinder.height,
+                        Bitmap.Config.ARGB_8888
+                    )
+                val widthVal = previewBitmap.width.toDouble() / bitmap.width.toDouble()
+                val heightVal = previewBitmap.height.toDouble() / bitmap.height.toDouble()
+                this@Camera10Fragment.points.clear()
+                this@Camera10Fragment.points.addAll(points)
+                val previewPoints = points.map {
+                    Point(
+                        (previewBitmap.width.toDouble() / (bitmap.width.toDouble() / it.x.toDouble())).toInt(),
+                        (previewBitmap.height.toDouble() / (bitmap.height.toDouble() / it.y.toDouble())).toInt()
+                    )
+                }
+                /*val previewPoints = points.map{
                 Point( (it.x.toDouble() * widthVal).toInt(),
                     (it.y.toDouble() * heightVal).toInt())
             }*/
 
-            Log.d(
-                "Sizes Of Image",
-                "\n${bitmap.width}, ${bitmap.height}\n${previewBitmap.width}, ${previewBitmap.height}"
-            )
-            val canvas = Canvas(previewBitmap)
-            if (previewPoints.size >= 4) {
-                canvas.drawLineWithPoint(previewPoints[0], previewPoints[1])
-                canvas.drawLineWithPoint(previewPoints[1], previewPoints[2])
-                canvas.drawLineWithPoint(previewPoints[2], previewPoints[3])
-                canvas.drawLineWithPoint(previewPoints[3], previewPoints[0])
+                Log.d(
+                    "Sizes Of Image",
+                    "\n${bitmap.width}, ${bitmap.height}\n${previewBitmap.width}, ${previewBitmap.height}" +
+                            "\n $points \n $previewPoints \n\n"
+                )
+                val canvas = Canvas(previewBitmap)
+                if (previewPoints.size >= 4) {
+                    canvas.drawLineWithPoint(previewPoints[0], previewPoints[1])
+                    canvas.drawLineWithPoint(previewPoints[1], previewPoints[2])
+                    canvas.drawLineWithPoint(previewPoints[2], previewPoints[3])
+                    canvas.drawLineWithPoint(previewPoints[3], previewPoints[0])
+                }
+                ivDrawable.setImageBitmap(previewBitmap)
+                //ivOpenCV.setImageBitmap(bitmap)
             }
-            ivDrawable.setImageBitmap(previewBitmap)
-//            ivDrawable.setImageBitmap(bitmap)
         }
     }
 
@@ -308,10 +387,11 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
             try {
                 // A variable number of use-cases can be passed here -
                 // camera provides access to CameraControl & CameraInfo
+                Log.d(TAG, "Use case binding...")
                 camera = cameraProvider.bindToLifecycle(
                     this as LifecycleOwner, cameraSelector, preview, imageCapture, imageAnalyzer
                 )
-            } catch(exc: Exception) {
+            } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
 
@@ -340,7 +420,92 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
     /** Method used to re-draw the camera UI controls, called every time configuration changes. */
     private fun updateCameraUi() {
         ivCapture.setOnClickListener {
+            /*lifecycleScope.launch {
+                val mainExecutor = ContextCompat.getMainExecutor(requireContext())
 
+                val photoFile =
+                    createFile(
+                        getOutputDirectory(requireContext()),
+                        FILENAME,
+                        PHOTO_EXTENSION
+                    )
+
+                // Setup image capture metadata
+                val metadata = ImageCapture.Metadata()
+                imageCapture?.takePicture(
+                    photoFile,
+                    metadata,
+                    mainExecutor,
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(file: File) {
+
+                            lifecycleScope.launch {
+
+
+                                *//*var rotation = rotationDegrees % 360
+                                                                if (rotation < 0) {
+                                                                    rotation += 360
+                                                                }*//*
+
+                                val previewBitmap = BitmapFactory.decodeFile(file.absolutePath)
+                                //image?.decodeBitmap()?.rotate(rotation.toFloat())
+                                previewBitmap?.let {
+                                    val widthVal = it.width.toDouble() / bitmap!!.width.toDouble()
+                                    val heightVal =
+                                        it.height.toDouble() / bitmap!!.height.toDouble()
+                                    points.forEach {
+                                        it.x = (it.x.toDouble() * widthVal).toInt()
+                                        it.y = (it.y.toDouble() * heightVal).toInt()
+                                    }
+                                    createImageFromBitmap(
+                                        context!!,
+                                        previewBitmap,
+                                        rvAdapter.itemCount
+                                    )?.let {
+                                        if (points.size == 4) {
+                                            val rectangle = Rectangle(
+                                                points[0], points[1], points[2], points[3]
+                                            )
+                                            val doc = getDocument(previewBitmap, rectangle)
+                                            val document = Document(it, rectangle, doc)
+                                            rvAdapter.addItem(document, notify = true)
+                                            if (documentVM.isSinglePage) {
+
+                                                val navOptions = NavOptions.Builder()
+                                                    .setPopUpTo(R.id.cameraFragment, true)
+                                                    .build()
+                                                findNavController().navigate(
+                                                    R.id.action_cameraFragment_to_imageViewerFragment,
+                                                    bundleOf(),
+                                                    navOptions
+                                                )
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun onError(
+                            imageCaptureError: Int,
+                            message: String,
+                            cause: Throwable?
+                        ) {
+                            Log.d("Capture Error", message)
+                        }
+                    })
+                // We can only change the foreground Drawable using API level 23+ API
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                    // Display flash animation to indicate that photo was captured
+                    container.postDelayed({
+                        container.foreground = ColorDrawable(Color.WHITE)
+                        container.postDelayed(
+                            { container.foreground = null }, 50L)
+                    }, 100L)
+                }
+            }*/
             // Get a stable reference of the modifiable image capture use case
             imageCapture?.let { imageCapture ->
 
@@ -364,7 +529,8 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
                     container.postDelayed({
                         container.foreground = ColorDrawable(Color.WHITE)
                         container.postDelayed(
-                            { container.foreground = null }, 50L)
+                            { container.foreground = null }, 50L
+                        )
                     }, 100L)
                 }
             }
@@ -398,6 +564,26 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
         )
     }
 
+    inner class DocVH(view: View) : RecyclerView.ViewHolder(view) {
+        fun bind(document: Document) {
+            with(itemView) {
+                val doc = document.croppedImage
+                ivPreview.setImageBitmap(doc)
+                val set = ConstraintSet()
+                set.clone(clParent)
+                set.setDimensionRatio(R.id.ivPreview, "${doc.width}:${doc.height}")
+                set.applyTo(clParent)
+
+                setOnClickListener {
+                    findNavController().navigate(R.id.action_cameraFragment_to_imageViewerFragment,
+                        Bundle().apply {
+                            putInt(ImageViewerFragment.ARG_DOC_POSITION, adapterPosition)
+                        })
+                }
+            }
+        }
+    }
+
     companion object {
 
         private const val TAG = "CameraXBasic"
@@ -408,7 +594,9 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
 
         /** Helper function used to create a timestamped file */
         private fun createFile(baseFolder: File, format: String, extension: String) =
-            File(baseFolder, SimpleDateFormat(format, Locale.US)
-                .format(System.currentTimeMillis()) + extension)
+            File(
+                baseFolder, SimpleDateFormat(format, Locale.US)
+                    .format(System.currentTimeMillis()) + extension
+            )
     }
 }

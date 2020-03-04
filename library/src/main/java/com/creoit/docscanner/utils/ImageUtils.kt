@@ -1,5 +1,6 @@
 package com.creoit.docscanner.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.*
@@ -109,6 +110,7 @@ fun Bitmap.rotate(degrees: Float): Bitmap {
     return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
 }
 
+@SuppressLint("UnsafeExperimentalUsageError")
 fun ImageProxy.getBitmap(rotationDegrees: Int): Bitmap {
 
     var rotation = rotationDegrees % 360
@@ -125,6 +127,7 @@ fun ImageProxy.getBitmap(rotationDegrees: Int): Bitmap {
     return bitmap.rotate(rotation.toFloat())
 }
 
+@SuppressLint("UnsafeExperimentalUsageError")
 fun ImageProxy.decodeBitmap(): Bitmap? {
     return image?.let {
         val buffer = planes[0].buffer

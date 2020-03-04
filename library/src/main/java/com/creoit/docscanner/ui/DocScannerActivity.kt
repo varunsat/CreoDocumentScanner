@@ -14,6 +14,9 @@ import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.annotation.StringRes
+import androidx.camera.camera2.Camera2Config
+import androidx.camera.core.CameraX
+import androidx.camera.core.CameraXConfig
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -40,7 +43,7 @@ import org.jetbrains.anko.startActivityForResult
 import java.io.File
 
 
-class DocScannerActivity : BaseActivity(), OnFragmentInteractionListener {
+class DocScannerActivity : BaseActivity(), OnFragmentInteractionListener{
 
     private val imageList by lazy {
         intent?.getParcelableArrayListExtra<Uri>(ARG_IMAGE_URI_LIST)
@@ -56,7 +59,7 @@ class DocScannerActivity : BaseActivity(), OnFragmentInteractionListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_doc_scanner)
-
+        //CameraX.initialize(this, Camera2Config.defaultConfig())
         initKoin(this@DocScannerActivity)
         setupActionBar(toolbar)
 

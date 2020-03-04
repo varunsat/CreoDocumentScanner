@@ -7,7 +7,7 @@
 7    <uses-sdk
 8        android:minSdkVersion="21"
 8-->/Users/shridharmprabhu/Work/Projects/CreoDocScanner/sdk/java/AndroidManifest.xml
-9        android:targetSdkVersion="26" />
+9        android:targetSdkVersion="29" />
 9-->/Users/shridharmprabhu/Work/Projects/CreoDocScanner/sdk/java/AndroidManifest.xml
 10
 11</manifest>

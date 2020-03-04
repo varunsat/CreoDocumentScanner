@@ -23,14 +23,25 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:visibility="visible"
-        app:layout_constraintDimensionRatio="1:2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <ImageView
+        android:elevation="8dp"
+        android:id="@+id/ivDrawable"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@id/viewFinder"
+        app:layout_constraintStart_toStartOf="@id/viewFinder"
+        app:layout_constraintTop_toTopOf="@id/viewFinder" />
 
     <ImageView
         android:elevation="6dp"
-        android:id="@+id/ivDrawable"
+        android:id="@+id/ivOpenCV"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="visible"

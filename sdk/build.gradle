@@ -96,12 +96,12 @@ group = "com.github.varunsat"
 println "OpenCV: " + project.buildscript.sourceFile
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 29
     //buildToolsVersion "x.y.z" // not needed since com.android.tools.build:gradle:3.0.0
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 26
+        targetSdkVersion 29
 
         externalNativeBuild {
             cmake {
