@@ -18,6 +18,7 @@ import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
+import android.util.Size
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -297,7 +298,7 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
 
                 Log.d(
                     "Sizes Of Image",
-                    "\n${bitmap.width}, ${bitmap.height}\n${previewBitmap.width}, ${previewBitmap.height}" +
+                    "\n${viewFinder.width}, ${viewFinder.height}\n\n${bitmap.width}, ${bitmap.height}\n${previewBitmap.width}, ${previewBitmap.height}" +
                             "\n $points \n $previewPoints \n\n"
                 )
                 val canvas = Canvas(previewBitmap)
@@ -349,7 +350,8 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
             // Preview
             preview = Preview.Builder()
                 // We request aspect ratio but no resolution
-                .setTargetAspectRatio(screenAspectRatio)
+                .setTargetAspectRatio(aspectRatio(viewFinder.width, viewFinder.height))
+                //.setTargetResolution(Size(viewFinder.width, viewFinder.height))
                 // Set initial target rotation
                 .setTargetRotation(rotation)
                 .build()
@@ -362,7 +364,8 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 // We request aspect ratio but no resolution to match preview config, but letting
                 // CameraX optimize for whatever specific resolution best fits requested capture mode
-                .setTargetAspectRatio(screenAspectRatio)
+                .setTargetAspectRatio(aspectRatio(viewFinder.width, viewFinder.height))
+                //.setTargetResolution(Size(viewFinder.width, viewFinder.height))
                 // Set initial target rotation, we will have to call this again if rotation changes
                 // during the lifecycle of this use case
                 .setTargetRotation(rotation)
@@ -370,8 +373,10 @@ class Camera10Fragment : BaseFragment(), OnFrameChangeListener {
 
             // ImageAnalysis
             imageAnalyzer = ImageAnalysis.Builder()
+
                 // We request aspect ratio but no resolution
-                .setTargetAspectRatio(screenAspectRatio)
+                //.setTargetAspectRatio(aspectRatio(viewFinder.width, viewFinder.height))
+                .setTargetResolution(Size(viewFinder.width, viewFinder.height))
                 // Set initial target rotation, we will have to call this again if rotation changes
                 // during the lifecycle of this use case
                 .setTargetRotation(rotation)
